@@ -9,3 +9,15 @@ body {
   border: 4px solid black;
   background-color: white;
 }
+
+.toolbarWrapper {
+  margin: 10px;
+}
+
+.toolbarWrapper button {
+  margin-right: 10px;
+}
+
+.toolbarWrapper button.selected {
+  background-color: pink;
+}
