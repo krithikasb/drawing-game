@@ -2,6 +2,11 @@
 <html>
   <head>
     <link rel="stylesheet" type="text/css" href="./styles.css" />
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-database.js"></script>
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+        https://firebase.google.com/docs/web/setup#available-libraries -->
   </head>
   <body>
     <h1>Hello!</h1>
@@ -11,7 +16,9 @@
     <div class="toolbarWrapper">
       <button id="pencil" class="selected">Pencil</button>
       <button id="eraser">Eraser</button>
+      <button id="read">Read</button>
     </div>
     <script src="canvas.controller.js"></script>
+    <script src="firebase.js"></script>
   </body>
 </html>

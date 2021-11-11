@@ -8,6 +8,8 @@ let previousX = 0;
 let previousY = 0;
 context.strokeStyle = "black";
 context.lineWidth = 2;
+let typeSelected = "pencil";
+let readOnly = false;
 
 function drawPath(from, to) {
   /* from { x, y } 
@@ -50,6 +52,13 @@ function onMouseMove(e) {
     x = e.clientX - canvas.offsetLeft;
     y = e.clientY - canvas.offsetTop;
     drawPath({x: previousX, y: previousY}, {x, y});
+    firebase.database().ref('/images').set({
+      img: {
+        type: typeSelected,
+        start: {x: previousX, y: previousY},
+        end: {x, y}
+      }
+    });
   }
 }
 
@@ -72,19 +81,66 @@ canvas.addEventListener("mouseenter", onMouseEnter);
 let pencil = document.getElementById("pencil");
 let eraser = document.getElementById("eraser");
 
+function changeStroke(strokeType) {
+  switch(strokeType) {
+    case "pencil":
+      typeSelected = "pencil";
+      context.strokeStyle = "black";
+      context.lineWidth = 2;
+      break;
+    case "eraser":
+      typeSelected = "eraser";
+      context.strokeStyle = "white";
+      context.lineWidth = 25;
+      break;
+    default:
+      break;
+  }
+}
+
 function onClickPencil() {
-  context.strokeStyle = "black";
-  context.lineWidth = 2;
+  changeStroke("pencil");
   eraser.classList.remove("selected");
   pencil.classList.add("selected");
 }
 
 function onClickEraser() {
-  context.strokeStyle = "white";
-  context.lineWidth = 25;
+  changeStroke('eraser')
   pencil.classList.remove("selected");
   eraser.classList.add("selected");
 }
 
 pencil.onclick = onClickPencil;
 eraser.onclick = onClickEraser;
+
+let readButton = document.getElementById("read");
+
+function onClickRead() {
+  readOnly = !readOnly;
+  if(readOnly) {
+    readButton.innerText = "Write";
+    canvas.removeEventListener("mousedown", onMouseDown);
+    canvas.removeEventListener("mousemove", onMouseMove);
+    canvas.removeEventListener("mouseup", onMouseUp);
+    canvas.removeEventListener("mouseout", onMouseOut);
+    canvas.removeEventListener("mouseenter", onMouseEnter);
+    var img = firebase.database().ref(`images/img`);
+    img.on('value', (snapshot) => {
+      const data = snapshot.val();
+      console.log("fb", data);
+      if(data.type !== typeSelected) {
+        changeStroke(data.type);
+      }
+      drawPath(data.start, data.end);
+    });
+  } else {
+    readButton.innerText = "Read";
+    canvas.addEventListener("mousedown", onMouseDown);
+    canvas.addEventListener("mousemove", onMouseMove);
+    canvas.addEventListener("mouseup", onMouseUp);
+    canvas.addEventListener("mouseout", onMouseOut);
+    canvas.addEventListener("mouseenter", onMouseEnter);
+  }
+}
+
+readButton.onclick = onClickRead;
