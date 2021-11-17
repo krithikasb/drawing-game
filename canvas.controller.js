@@ -53,7 +53,7 @@ function onMouseMove(e) {
     y = e.clientY - canvas.offsetTop;
     drawPath({x: previousX, y: previousY}, {x, y});
     firebase.database().ref('/images').set({
-      img: {
+      [gameId]: {
         type: typeSelected,
         start: {x: previousX, y: previousY},
         end: {x, y}
@@ -124,7 +124,7 @@ function onClickRead() {
     canvas.removeEventListener("mouseup", onMouseUp);
     canvas.removeEventListener("mouseout", onMouseOut);
     canvas.removeEventListener("mouseenter", onMouseEnter);
-    var img = firebase.database().ref(`images/img`);
+    var img = firebase.database().ref(`images/${gameId}`);
     img.on('value', (snapshot) => {
       const data = snapshot.val();
       console.log("fb", data);

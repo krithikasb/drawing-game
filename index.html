@@ -9,15 +9,49 @@
         https://firebase.google.com/docs/web/setup#available-libraries -->
   </head>
   <body>
-    <h1>Hello!</h1>
-    <div class="canvasWrapper">
-      <canvas id="canvas" width="800" height="600"/>
+    <div id="homepage">
+      <h1>Hello homepage!</h1>
+      <input id="nameOfGame" placeholder="Enter game ID"/>
+      <button id="start" onclick="onClickStart()">Start Game</button>
     </div>
-    <div class="toolbarWrapper">
-      <button id="pencil" class="selected">Pencil</button>
-      <button id="eraser">Eraser</button>
-      <button id="read">Read</button>
+    <div id="game" style="display: none;">
+      <h1>Hello!</h1>
+      <div class="canvasWrapper">
+        <canvas id="canvas" width="800" height="600"/>
+      </div>
+      <div class="toolbarWrapper">
+        <button id="pencil" class="selected">Pencil</button>
+        <button id="eraser">Eraser</button>
+        <button id="read">Read</button>
+        <button id="stop" onclick="onClickStop()">Stop Game</button>
+      </div>
     </div>
+    <script>
+      const urlSearchParams = new URLSearchParams(window.location.search);
+      const gameId = urlSearchParams.get("game");
+      if(gameId) {
+        document.getElementById("homepage").style.display = "none";
+        document.getElementById("game").style.display = "block";
+      } else {
+        document.getElementById("game").style.display = "none";
+        document.getElementById("homepage").style.display = "block";
+      }
+
+      function onClickStart() {
+        const gameName = document.getElementById("nameOfGame").value || "abcd"
+        history.pushState({game: gameName}, "title 1", `?game=${gameName}`);
+        console.log(history.state);
+          document.getElementById("homepage").style.display = "none";
+          document.getElementById("game").style.display = "block";
+      }
+
+      function onClickStop() {
+        history.back();
+        console.log(history.state);
+          document.getElementById("game").style.display = "none";
+          document.getElementById("homepage").style.display = "block";
+      }
+    </script>
     <script src="canvas.controller.js"></script>
     <script src="firebase.js"></script>
   </body>
