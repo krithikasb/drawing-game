@@ -10,24 +10,55 @@ var firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-firebase.auth().signInAnonymously()
-.then(() => {
-  // Signed in..
-})
-.catch((error) => {
-  var errorCode = error.code;
-  var errorMessage = error.message;
-  // ...
-});
+var uid;
+var displayName;
+var isAdmin = false;
+// firebase.auth().onAuthStateChanged((user) => {
+//   if (user) {
+//     // User is signed in, see docs for a list of available properties
+//     // https://firebase.google.com/docs/reference/js/firebase.User
+//     uid = user.uid;
+//     user.updateProfile({
+//       displayName: userName,
+//     }).then(function () {
+//       var displayName = user.displayName;
+//       console.log("fb", uid, displayName);
+//       firebase.database().ref(`/images/${gameId}/users/`).set({
+//         [displayName]: uid
+//       });
+//     });
+//     // ...
+//   } else {
+//     // User is signed out
+//     // ...
+//   }
+// });
 
-firebase.auth().onAuthStateChanged((user) => {
-  if (user) {
-    // User is signed in, see docs for a list of available properties
-    // https://firebase.google.com/docs/reference/js/firebase.User
-    var uid = user.uid;
-    // ...
-  } else {
-    // User is signed out
-    // ...
-  }
-});
+ function firebaseSignIn() {
+  firebase.auth().signInAnonymously()
+    .then((response) => {
+      // Signed in..
+      console.log("fb signin", response.user);
+      var user = response.user;
+      uid = user.uid;
+      user.updateProfile({
+        displayName: userName,
+      }).then(function () {
+        displayName = user.displayName;
+        console.log("fb", uid, displayName);
+        firebase.database().ref(`/images/${gameId}/users/`).push({
+          uid: uid,
+          displayName: displayName
+        });
+        firebase.database().ref(`/images/${gameId}/currentlyDrawingUser/`).set({
+          uid: uid,
+          displayName: displayName
+        });
+      });
+    })
+    .catch((error) => {
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      // ...
+    });
+}

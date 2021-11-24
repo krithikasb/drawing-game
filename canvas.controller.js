@@ -52,12 +52,10 @@ function onMouseMove(e) {
     x = e.clientX - canvas.offsetLeft;
     y = e.clientY - canvas.offsetTop;
     drawPath({x: previousX, y: previousY}, {x, y});
-    firebase.database().ref('/images').set({
-      [gameId]: {
-        type: typeSelected,
-        start: {x: previousX, y: previousY},
-        end: {x, y}
-      }
+    firebase.database().ref(`/images/${gameId}/${uid}`).set({
+      type: typeSelected,
+      start: {x: previousX, y: previousY},
+      end: {x, y}
     });
   }
 }
@@ -115,32 +113,52 @@ eraser.onclick = onClickEraser;
 
 let readButton = document.getElementById("read");
 
-function onClickRead() {
-  readOnly = !readOnly;
-  if(readOnly) {
-    readButton.innerText = "Write";
-    canvas.removeEventListener("mousedown", onMouseDown);
-    canvas.removeEventListener("mousemove", onMouseMove);
-    canvas.removeEventListener("mouseup", onMouseUp);
-    canvas.removeEventListener("mouseout", onMouseOut);
-    canvas.removeEventListener("mouseenter", onMouseEnter);
-    var img = firebase.database().ref(`images/${gameId}`);
-    img.on('value', (snapshot) => {
-      const data = snapshot.val();
-      console.log("fb", data);
-      if(data.type !== typeSelected) {
-        changeStroke(data.type);
-      }
-      drawPath(data.start, data.end);
-    });
-  } else {
-    readButton.innerText = "Read";
-    canvas.addEventListener("mousedown", onMouseDown);
-    canvas.addEventListener("mousemove", onMouseMove);
-    canvas.addEventListener("mouseup", onMouseUp);
-    canvas.addEventListener("mouseout", onMouseOut);
-    canvas.addEventListener("mouseenter", onMouseEnter);
-  }
-}
+function subscribeCurrentlyDrawingUserListener() {
+  /* toggles between drawing and reading mode */
+  var currentlyDrawingUserListener = firebase.database().ref(`images/${gameId}/currentlyDrawingUser`);
+  var currentlyDrawingUser = {};
+  currentlyDrawingUserListener.on('value', (snapshot) => {
+    const data = snapshot.val();
+    currentlyDrawingUser = data;
+    let childNodes = document.getElementById("userlist2").childNodes;
+    for(let node of childNodes) {
+      node.classList.remove("highlighted");
+    }
+    document.getElementById(currentlyDrawingUser.displayName).classList.add("highlighted");
 
-readButton.onclick = onClickRead;
+    if(currentlyDrawingUser.displayName !== displayName) {
+      readOnly = true;
+      canvas.removeEventListener("mousedown", onMouseDown);
+      canvas.removeEventListener("mousemove", onMouseMove);
+      canvas.removeEventListener("mouseup", onMouseUp);
+      canvas.removeEventListener("mouseout", onMouseOut);
+      canvas.removeEventListener("mouseenter", onMouseEnter);
+      var img = firebase.database().ref(`images/${gameId}/${currentlyDrawingUser.uid}`);
+      img.on('value', (snapshot) => {
+        const data = snapshot.val();
+        console.log("fb", data);
+        if(data) {
+          if(data.type !== typeSelected) {
+            changeStroke(data.type);
+          }
+          drawPath(data.start, data.end);
+        }
+      });
+    } else {
+      readOnly = false;
+      canvas.addEventListener("mousedown", onMouseDown);
+      canvas.addEventListener("mousemove", onMouseMove);
+      canvas.addEventListener("mouseup", onMouseUp);
+      canvas.addEventListener("mouseout", onMouseOut);
+      canvas.addEventListener("mouseenter", onMouseEnter);
+    }
+  });
+
+  function nextTurn() {
+    let currentlyDrawingUserIndex = userList.findIndex(user => user.uid === currentlyDrawingUser.uid);
+    let newIndex = (currentlyDrawingUserIndex + 1) % userList.length;
+    firebase.database().ref(`/images/${gameId}/currentlyDrawingUser/`).set(userList[newIndex]);
+  }
+
+  setInterval(nextTurn, 10000);
+}

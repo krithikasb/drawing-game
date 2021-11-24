@@ -12,14 +12,21 @@
   <body>
     <div id="homepage">
       <h1>Hello homepage!</h1>
-      <input id="nameOfGame" placeholder="Enter game ID"/>
-      <button id="start" onclick="onClickStart()">Start Game</button>
+      <input id="gameIdInput" placeholder="Enter game ID"/>
+      <input id="userIdInput" placeholder="Enter user ID"/>
+      <button id="create" onclick="onClickJoin()">Create/Join Game</button>
+    </div>
+    <div id="lobby" style="display: none;">
+      <h1>Hello lobby!</h1>
+      <ul id="userlist"></ul>
+      <button disabled id="start" onclick="onClickStart()">Start Game</button>
     </div>
     <div id="game" style="display: none;">
       <h1>Hello!</h1>
       <div class="canvasWrapper">
         <canvas id="canvas" width="800" height="600"/>
       </div>
+      <ul id="userlist2"></ul>
       <div class="toolbarWrapper">
         <button id="pencil" class="selected">Pencil</button>
         <button id="eraser">Eraser</button>
@@ -27,33 +34,112 @@
         <button id="stop" onclick="onClickStop()">Stop Game</button>
       </div>
     </div>
+    <script src="firebase.js"></script>
+    <script src="canvas.controller.js"></script>
     <script>
       const urlSearchParams = new URLSearchParams(window.location.search);
-      const gameId = urlSearchParams.get("game");
+      var gameId = urlSearchParams.get("game");
+      var userName = "";
+      var userMapping = {};
+      var userList = [];
+      // var uid = "";
       if(gameId) {
-        document.getElementById("homepage").style.display = "none";
-        document.getElementById("game").style.display = "block";
+        // document.getElementById("homepage").style.display = "none";
+        // document.getElementById("game").style.display = "block";
+        document.getElementById("gameIdInput").value = gameId;
       } else {
         document.getElementById("game").style.display = "none";
         document.getElementById("homepage").style.display = "block";
+        document.getElementById("gameIdInput").value = "game" + Math.floor(Math.random(1000) * 1000);
+        document.getElementById("userIdInput").value = "user" + Math.floor(Math.random(1000) * 1000);
+      }
+
+      function onClickJoin() {
+        const gameName = document.getElementById("gameIdInput").value || gameId;
+        gameId = gameName;
+        userName = document.getElementById("userIdInput").value || "user1"
+        history.pushState({game: gameName}, "title 1", `?game=${gameName}`);
+        console.log(history.state);
+        document.getElementById("homepage").style.display = "none";
+        document.getElementById("lobby").style.display = "block";
+        document.getElementById("game").style.display = "none";
+        firebaseSignIn();    
+        var userListListener = firebase.database().ref(`images/${gameId}/users`);
+        var userListFromFb = {};
+        userListListener.on('value', (snapshot) => {
+          const data = snapshot.val();
+          userListFromFb = data;
+          console.log("userlistlistener", data);
+          userList = [];
+          for(let key in userListFromFb) {
+            let user = userListFromFb[key];
+            userList.push(user);
+            if(!userMapping[user.displayName]) {
+              const userListElement = document.getElementById("userlist");
+              const newListItem = document.createElement("li");
+              newListItem.appendChild(document.createTextNode(user.displayName));
+              userListElement.appendChild(newListItem);
+              userMapping[user.displayName] = user.uid;
+            }
+            if(Object.keys(userListFromFb).length === 1 && user.displayName === displayName) {
+              isAdmin = true;
+              document.getElementById("start").disabled = false;
+              firebase.database().ref(`/images/${gameId}/admin`).set({
+                uid: uid,
+                displayName: displayName
+              });
+              firebase.database().ref(`/images/${gameId}/gameState`).set({
+                state: "lobby"
+              });
+            }
+          }
+        });
+        if(!isAdmin) {
+          var gameStateListener = firebase.database().ref(`images/${gameId}/gameState`);
+          gameStateListener.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if(data && data.state === "started") {
+              startGame();
+            }
+          });
+        }
       }
 
       function onClickStart() {
-        const gameName = document.getElementById("nameOfGame").value || "abcd"
-        history.pushState({game: gameName}, "title 1", `?game=${gameName}`);
-        console.log(history.state);
-          document.getElementById("homepage").style.display = "none";
-          document.getElementById("game").style.display = "block";
+        startGame();
+        if(isAdmin) {
+          firebase.database().ref(`/images/${gameId}/gameState`).set({
+            state: "started"
+          });
+        }
+      }
+
+      function startGame() {
+        document.getElementById("homepage").style.display = "none";
+        document.getElementById("lobby").style.display = "none";
+        document.getElementById("game").style.display = "block";
+        document.getElementById("userlist2").innerHTML = "";
+        for(let i = 0; i < userList.length; i++) {
+          let user = userList[i];
+          const userListElement = document.getElementById("userlist2");
+          const newListItem = document.createElement("li");
+          newListItem.id = user.displayName;
+          if(i === userList.length - 1) {
+            newListItem.classList.add("highlighted")
+          }
+          newListItem.appendChild(document.createTextNode(user.displayName));
+          userListElement.appendChild(newListItem);
+        }
+        subscribeCurrentlyDrawingUserListener();
       }
 
       function onClickStop() {
         history.back();
         console.log(history.state);
-          document.getElementById("game").style.display = "none";
-          document.getElementById("homepage").style.display = "block";
+        document.getElementById("game").style.display = "none";
+        document.getElementById("lobby").style.display = "none";
+        document.getElementById("homepage").style.display = "block";
       }
     </script>
-    <script src="canvas.controller.js"></script>
-    <script src="firebase.js"></script>
   </body>
 </html>

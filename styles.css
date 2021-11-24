@@ -21,3 +21,7 @@ body {
 .toolbarWrapper button.selected {
   background-color: pink;
 }
+
+#userlist2 li.highlighted {
+  color: pink;
+}
