@@ -10,6 +10,8 @@ context.strokeStyle = "black";
 context.lineWidth = 2;
 let typeSelected = "pencil";
 let readOnly = false;
+const DRAWING_INTERVAL = 5;
+const PAUSE_INTERVAL = 3;
 
 function drawPath(from, to) {
   /* from { x, y } 
@@ -148,7 +150,19 @@ function subscribeCurrentlyDrawingUserListener() {
       let overlay = document.getElementById("overlay");
       overlay.classList.add("hidden");
       context.clearRect(0, 0, 800, 600);
-    }, 500);
+
+      let remainingSeconds = DRAWING_INTERVAL;
+      let timerElement = document.getElementById("timer");
+  
+      timerElement.childNodes[0].replaceWith(document.createTextNode(`${remainingSeconds}`));
+      let intervalId = setInterval(()=> {
+        remainingSeconds -= 1;
+        timerElement.childNodes[0].replaceWith(document.createTextNode(`${remainingSeconds}`));
+        if(remainingSeconds <= 0) {
+          clearInterval(intervalId)
+        }
+      }, 1000);
+    }, PAUSE_INTERVAL * 1000);
 
     let childNodes = document.getElementById("userlist2").childNodes;
     for(let node of childNodes) {
@@ -197,6 +211,6 @@ function subscribeCurrentlyDrawingUserListener() {
   console.log("isAdmin", isAdmin)
   if(isAdmin) {
     console.log("if isAdmin", isAdmin)
-    setInterval(nextTurn, 5000);
+    setInterval(nextTurn, (DRAWING_INTERVAL + PAUSE_INTERVAL) * 1000);
   }
 }
