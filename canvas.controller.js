@@ -139,16 +139,22 @@ function subscribeCurrentlyDrawingUserListener() {
     // disable drawing for all users, show message saying nextUser's turncontext.clearRect(0, 0, 800, 600);
     let overlay = document.getElementById("overlay");
     let overlayText = document.getElementById("overlayText");
-
-    overlayText.childNodes[0].replaceWith(document.createTextNode(`${currentlyDrawingUser.displayName}'s turn`))
-    setTimeout(()=> {
-      context.clearRect(0, 0, 800, 600);
-      overlay.classList.remove("hidden");
-    }, 0);
+    let wordElement = document.getElementById("word");
+    wordElement.classList.add("hidden");
+    context.clearRect(0, 0, 800, 600);
+    overlay.classList.remove("hidden");
+    if(uid !== currentlyDrawingUser.uid) {
+      overlayText.childNodes[0].replaceWith(document.createTextNode(`${currentlyDrawingUser.displayName}'s turn`));
+    } else {
+      let word = WORDS[Math.floor(Math.random(WORDS.length) * WORDS.length)]
+      overlayText.childNodes[0].replaceWith(document.createTextNode(`Your turn!\n Your word is: ${word}`));
+      firebase.database().ref(`/images/${gameId}/word/`).set(word);
+    }
 
     setTimeout(() => {
       let overlay = document.getElementById("overlay");
       overlay.classList.add("hidden");
+      wordElement.classList.remove("hidden");
       context.clearRect(0, 0, 800, 600);
 
       let remainingSeconds = DRAWING_INTERVAL;
@@ -195,6 +201,19 @@ function subscribeCurrentlyDrawingUserListener() {
       canvas.addEventListener("mouseup", onMouseUp);
       canvas.addEventListener("mouseout", onMouseOut);
       canvas.addEventListener("mouseenter", onMouseEnter);
+    }
+  });
+
+  var correctWordListener = firebase.database().ref(`images/${gameId}/word`);
+  correctWordListener.on('value', (snapshot) => {
+    const data = snapshot.val();
+    var correctWord = data;
+
+    let wordElement = document.getElementById("word");
+    if(uid !== currentlyDrawingUser.uid) {
+      wordElement.childNodes[0].replaceWith(document.createTextNode("".padEnd(correctWord.length, "_")));
+    } else {
+      wordElement.childNodes[0].replaceWith(document.createTextNode(correctWord));
     }
   });
 

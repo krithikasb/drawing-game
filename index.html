@@ -24,6 +24,7 @@
     <div id="game" style="display: none;">
       <h1>Hello!</h1>
       <h1 id="timer">&nbsp;</h1>
+      <h1 id="word" class="word">&nbsp;</h1>
       <div class="canvasWrapper">
         <canvas id="canvas" width="800" height="600"></canvas>
         <div id="overlay" class="overlay hidden">
@@ -39,6 +40,7 @@
       </div>
     </div>
     <script src="firebase.js"></script>
+    <script src="words.js"></script>
     <script src="canvas.controller.js"></script>
     <script>
       const urlSearchParams = new URLSearchParams(window.location.search);

@@ -50,5 +50,12 @@ body {
   font-weight: 800;
   color: white;
   opacity: 1;
+}
 
+.word {
+  letter-spacing: 3px;
+}
+
+.word.hidden {
+  opacity: 0;
 }
