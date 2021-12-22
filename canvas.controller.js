@@ -27,8 +27,12 @@ function onMouseDown(e) {
   isMouseClicked = true;
   console.log("mouse down");
   /* for drawing a single point */
-  x = e.clientX - canvas.offsetLeft;
-  y = e.clientY - canvas.offsetTop;
+  var boundingClientRect = canvas.getBoundingClientRect();
+  // these are relative to the viewport, i.e. the window
+  var offsetTop = boundingClientRect.top;
+  var offsetLeft = boundingClientRect.left;
+  x = e.clientX - offsetLeft;
+  y = e.clientY - offsetTop;
   drawPath({x, y}, {x, y});
 }
 
@@ -38,8 +42,12 @@ function onMouseEnter(e) {
   /* update the current position of the cursor in the canvas */
   previousX = x;
   previousY = y;
-  x = e.clientX - canvas.offsetLeft;
-  y = e.clientY - canvas.offsetTop;
+  var boundingClientRect = canvas.getBoundingClientRect();
+  // these are relative to the viewport, i.e. the window
+  var offsetTop = boundingClientRect.top;
+  var offsetLeft = boundingClientRect.left;
+  x = e.clientX - offsetLeft;
+  y = e.clientY - offsetTop;
 }
 
 function onMouseMove(e) {
@@ -49,8 +57,12 @@ function onMouseMove(e) {
   if(isMouseClicked && isMouseInCanvas) {
     previousX = x;
     previousY = y;
-    x = e.clientX - canvas.offsetLeft;
-    y = e.clientY - canvas.offsetTop;
+    var boundingClientRect = canvas.getBoundingClientRect();
+    // these are relative to the viewport, i.e. the window
+    var offsetTop = boundingClientRect.top;
+    var offsetLeft = boundingClientRect.left;
+    x = e.clientX - offsetLeft;
+    y = e.clientY - offsetTop;
     drawPath({x: previousX, y: previousY}, {x, y});
     firebase.database().ref(`/images/${gameId}/${uid}`).set({
       type: typeSelected,
@@ -113,13 +125,31 @@ eraser.onclick = onClickEraser;
 
 let readButton = document.getElementById("read");
 
+var currentlyDrawingUser = {};
+
 function subscribeCurrentlyDrawingUserListener() {
   /* toggles between drawing and reading mode */
   var currentlyDrawingUserListener = firebase.database().ref(`images/${gameId}/currentlyDrawingUser`);
-  var currentlyDrawingUser = {};
   currentlyDrawingUserListener.on('value', (snapshot) => {
     const data = snapshot.val();
     currentlyDrawingUser = data;
+    
+    // disable drawing for all users, show message saying nextUser's turncontext.clearRect(0, 0, 800, 600);
+    let overlay = document.getElementById("overlay");
+    let overlayText = document.getElementById("overlayText");
+
+    overlayText.childNodes[0].replaceWith(document.createTextNode(`${currentlyDrawingUser.displayName}'s turn`))
+    setTimeout(()=> {
+      context.clearRect(0, 0, 800, 600);
+      overlay.classList.remove("hidden");
+    }, 0);
+
+    setTimeout(() => {
+      let overlay = document.getElementById("overlay");
+      overlay.classList.add("hidden");
+      context.clearRect(0, 0, 800, 600);
+    }, 500);
+
     let childNodes = document.getElementById("userlist2").childNodes;
     for(let node of childNodes) {
       node.classList.remove("highlighted");
@@ -157,8 +187,16 @@ function subscribeCurrentlyDrawingUserListener() {
   function nextTurn() {
     let currentlyDrawingUserIndex = userList.findIndex(user => user.uid === currentlyDrawingUser.uid);
     let newIndex = (currentlyDrawingUserIndex + 1) % userList.length;
-    firebase.database().ref(`/images/${gameId}/currentlyDrawingUser/`).set(userList[newIndex]);
+    let nextUser = userList[newIndex];
+    console.log("nextturn", userList, currentlyDrawingUser, currentlyDrawingUserIndex, newIndex, nextUser);
+    
+    firebase.database().ref(`/images/${gameId}/currentlyDrawingUser/`).set(nextUser);
   }
-
-  setInterval(nextTurn, 10000);
+  
+  // if admin. then set the next user's turn in the db
+  console.log("isAdmin", isAdmin)
+  if(isAdmin) {
+    console.log("if isAdmin", isAdmin)
+    setInterval(nextTurn, 5000);
+  }
 }

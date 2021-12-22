@@ -24,7 +24,10 @@
     <div id="game" style="display: none;">
       <h1>Hello!</h1>
       <div class="canvasWrapper">
-        <canvas id="canvas" width="800" height="600"/>
+        <canvas id="canvas" width="800" height="600"></canvas>
+        <div id="overlay" class="overlay hidden">
+          <div id="overlayText">nextUser's turn</div>
+        </div>
       </div>
       <ul id="userlist2"></ul>
       <div class="toolbarWrapper">
@@ -93,16 +96,16 @@
               });
             }
           }
+          if(!isAdmin) {
+            var gameStateListener = firebase.database().ref(`images/${gameId}/gameState`);
+            gameStateListener.on('value', (snapshot) => {
+              const data = snapshot.val();
+              if(data && data.state === "started") {
+                startGame();
+              }
+            });
+          }
         });
-        if(!isAdmin) {
-          var gameStateListener = firebase.database().ref(`images/${gameId}/gameState`);
-          gameStateListener.on('value', (snapshot) => {
-            const data = snapshot.val();
-            if(data && data.state === "started") {
-              startGame();
-            }
-          });
-        }
       }
 
       function onClickStart() {
