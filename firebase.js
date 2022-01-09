@@ -50,7 +50,7 @@ var isAdmin = false;
           uid: uid,
           displayName: displayName
         });
-        firebase.database().ref(`/images/${gameId}/currentlyDrawingUser/`).set({
+        firebase.database().ref(`/images/${gameId}/currentRound/currentlyDrawingUser/`).set({
           uid: uid,
           displayName: displayName
         });

@@ -10,7 +10,7 @@ context.strokeStyle = "black";
 context.lineWidth = 2;
 let typeSelected = "pencil";
 let readOnly = false;
-const DRAWING_INTERVAL = 5;
+const DRAWING_INTERVAL = 50;
 const PAUSE_INTERVAL = 3;
 
 function drawPath(from, to) {
@@ -125,13 +125,14 @@ function onClickEraser() {
 pencil.onclick = onClickPencil;
 eraser.onclick = onClickEraser;
 
-let readButton = document.getElementById("read");
 
 var currentlyDrawingUser = {};
+var correctWord;
+var guesses = 0;
 
 function subscribeCurrentlyDrawingUserListener() {
   /* toggles between drawing and reading mode */
-  var currentlyDrawingUserListener = firebase.database().ref(`images/${gameId}/currentlyDrawingUser`);
+  var currentlyDrawingUserListener = firebase.database().ref(`images/${gameId}/currentRound/currentlyDrawingUser`);
   currentlyDrawingUserListener.on('value', (snapshot) => {
     const data = snapshot.val();
     currentlyDrawingUser = data;
@@ -143,12 +144,22 @@ function subscribeCurrentlyDrawingUserListener() {
     wordElement.classList.add("hidden");
     context.clearRect(0, 0, 800, 600);
     overlay.classList.remove("hidden");
+
+    document.getElementById("guessResponse").innerText = "";
+    document.getElementById("guess").value = "";
+    document.getElementById("guess").disabled = false;
+    firebase.database().ref(`/images/${gameId}/currentRound/guessedUsers/`).set(null);
     if(uid !== currentlyDrawingUser.uid) {
       overlayText.childNodes[0].replaceWith(document.createTextNode(`${currentlyDrawingUser.displayName}'s turn`));
+      // add guess box
+      document.getElementById("guessBox").style.display = "block";
     } else {
       let word = WORDS[Math.floor(Math.random(WORDS.length) * WORDS.length)]
       overlayText.childNodes[0].replaceWith(document.createTextNode(`Your turn!\n Your word is: ${word}`));
-      firebase.database().ref(`/images/${gameId}/word/`).set(word);
+      firebase.database().ref(`/images/${gameId}/currentRound/word/`).set(word);
+
+      document.getElementById("guessBox").style.display = "none";
+
     }
 
     setTimeout(() => {
@@ -204,10 +215,10 @@ function subscribeCurrentlyDrawingUserListener() {
     }
   });
 
-  var correctWordListener = firebase.database().ref(`images/${gameId}/word`);
+  var correctWordListener = firebase.database().ref(`images/${gameId}/currentRound/word`);
   correctWordListener.on('value', (snapshot) => {
     const data = snapshot.val();
-    var correctWord = data;
+    correctWord = data;
 
     let wordElement = document.getElementById("word");
     if(uid !== currentlyDrawingUser.uid) {
@@ -217,19 +228,34 @@ function subscribeCurrentlyDrawingUserListener() {
     }
   });
 
+  // listen for guessedUsers
+  firebase.database().ref(`images/${gameId}/currentRound/guessedUsers`).on('child_added', (data) => {
+    const newGuessedUser = data.val().displayName;
+    if(newGuessedUser && document.getElementById(newGuessedUser)) {
+      document.getElementById(newGuessedUser).style.backgroundColor = "lightgreen";
+      guesses++;
+      if(guesses === userList.length - 1) {
+        // endTurn
+        nextTurn();
+      }
+    }
+  });
+
   function nextTurn() {
     let currentlyDrawingUserIndex = userList.findIndex(user => user.uid === currentlyDrawingUser.uid);
     let newIndex = (currentlyDrawingUserIndex + 1) % userList.length;
     let nextUser = userList[newIndex];
     console.log("nextturn", userList, currentlyDrawingUser, currentlyDrawingUserIndex, newIndex, nextUser);
     
-    firebase.database().ref(`/images/${gameId}/currentlyDrawingUser/`).set(nextUser);
+    firebase.database().ref(`/images/${gameId}/currentRound/currentlyDrawingUser/`).set(nextUser);
+    guesses = 0;
+    setTimeout(nextTurn, (DRAWING_INTERVAL + PAUSE_INTERVAL) * 1000)
   }
   
   // if admin. then set the next user's turn in the db
   console.log("isAdmin", isAdmin)
   if(isAdmin) {
     console.log("if isAdmin", isAdmin)
-    setInterval(nextTurn, (DRAWING_INTERVAL + PAUSE_INTERVAL) * 1000);
+    setTimeout(nextTurn, (DRAWING_INTERVAL + PAUSE_INTERVAL) * 1000);
   }
 }

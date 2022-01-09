@@ -22,7 +22,6 @@
       <button disabled id="start" onclick="onClickStart()">Start Game</button>
     </div>
     <div id="game" style="display: none;">
-      <h1>Hello!</h1>
       <h1 id="timer">&nbsp;</h1>
       <h1 id="word" class="word">&nbsp;</h1>
       <div class="canvasWrapper">
@@ -31,11 +30,15 @@
           <div id="overlayText">nextUser's turn</div>
         </div>
       </div>
+      <div id="guessBox">
+        <p id="guessResponse">&nbsp;</p>
+        <input type="text" id="guess" />
+        <button type="submit" onclick="onClickGuess()">Guess</button>
+      </div>
       <ul id="userlist2"></ul>
       <div class="toolbarWrapper">
         <button id="pencil" class="selected">Pencil</button>
         <button id="eraser">Eraser</button>
-        <button id="read">Read</button>
         <button id="stop" onclick="onClickStop()">Stop Game</button>
       </div>
     </div>
@@ -145,6 +148,23 @@
         document.getElementById("game").style.display = "none";
         document.getElementById("lobby").style.display = "none";
         document.getElementById("homepage").style.display = "block";
+      }
+
+      function onClickGuess(e) {
+        let guessValue = document.getElementById("guess").value;
+        if(guessValue.trim().toLowerCase() === correctWord.toLowerCase()) {
+          document.getElementById("guessResponse").innerText = "You guessed it!";
+          document.getElementById("guess").disabled = true;
+
+          //push guessed user
+          firebase.database().ref(`/images/${gameId}/currentRound/guessedUsers`).push({
+            uid: uid,
+            displayName: displayName
+          });
+        } else {
+          document.getElementById("guessResponse").innerText = "Try again"
+          guessValue = "";
+        }
       }
     </script>
   </body>
