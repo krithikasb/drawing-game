@@ -130,6 +130,8 @@ var currentlyDrawingUser = {};
 var correctWord;
 var guesses = 0;
 
+var intervalId;
+
 function subscribeCurrentlyDrawingUserListener() {
   /* toggles between drawing and reading mode */
   var currentlyDrawingUserListener = firebase.database().ref(`images/${gameId}/currentRound/currentlyDrawingUser`);
@@ -162,6 +164,9 @@ function subscribeCurrentlyDrawingUserListener() {
 
     }
 
+    clearInterval(intervalId);
+    // intervalId = 0;
+
     setTimeout(() => {
       let overlay = document.getElementById("overlay");
       overlay.classList.add("hidden");
@@ -171,10 +176,10 @@ function subscribeCurrentlyDrawingUserListener() {
       let remainingSeconds = DRAWING_INTERVAL;
       let timerElement = document.getElementById("timer");
   
-      timerElement.childNodes[0].replaceWith(document.createTextNode(`${remainingSeconds}`));
-      let intervalId = setInterval(()=> {
+      timerElement.innerText = remainingSeconds;
+      intervalId = setInterval(()=> {
         remainingSeconds -= 1;
-        timerElement.childNodes[0].replaceWith(document.createTextNode(`${remainingSeconds}`));
+        timerElement.innerText = remainingSeconds;
         if(remainingSeconds <= 0) {
           clearInterval(intervalId)
         }
