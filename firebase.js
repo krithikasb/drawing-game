@@ -13,6 +13,8 @@ firebase.initializeApp(firebaseConfig);
 var uid;
 var displayName;
 var isAdmin = false;
+var score = 0;
+var userRef;
 // firebase.auth().onAuthStateChanged((user) => {
 //   if (user) {
 //     // User is signed in, see docs for a list of available properties
@@ -46,13 +48,13 @@ var isAdmin = false;
       }).then(function () {
         displayName = user.displayName;
         console.log("fb", uid, displayName);
-        firebase.database().ref(`/images/${gameId}/users/`).push({
+
+        var userListRef = firebase.database().ref(`/images/${gameId}/users/`);
+        userRef = userListRef.push();
+        userRef.set({
           uid: uid,
-          displayName: displayName
-        });
-        firebase.database().ref(`/images/${gameId}/currentRound/currentlyDrawingUser/`).set({
-          uid: uid,
-          displayName: displayName
+          displayName: displayName,
+          score: score
         });
       });
     })

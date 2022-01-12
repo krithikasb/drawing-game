@@ -97,16 +97,18 @@
                 uid: uid,
                 displayName: displayName
               });
-              firebase.database().ref(`/images/${gameId}/gameState`).set({
-                state: "lobby"
+              firebase.database().ref(`/images/${gameId}/currentRound/currentlyDrawingUser/`).set({
+                uid: uid,
+                displayName: displayName
               });
+              firebase.database().ref(`/images/${gameId}/gameState`).set("lobby");
             }
           }
           if(!isAdmin) {
             var gameStateListener = firebase.database().ref(`images/${gameId}/gameState`);
             gameStateListener.on('value', (snapshot) => {
               const data = snapshot.val();
-              if(data && data.state === "started") {
+              if(data === "started") {
                 startGame();
               }
             });
@@ -117,9 +119,7 @@
       function onClickStart() {
         startGame();
         if(isAdmin) {
-          firebase.database().ref(`/images/${gameId}/gameState`).set({
-            state: "started"
-          });
+          firebase.database().ref(`/images/${gameId}/gameState`).set("started");
         }
       }
 
@@ -160,6 +160,14 @@
           firebase.database().ref(`/images/${gameId}/currentRound/guessedUsers`).push({
             uid: uid,
             displayName: displayName
+          });
+
+          // update current user score
+          score += 10;
+          userRef.set({
+            uid: uid,
+            displayName: displayName,
+            score: score
           });
         } else {
           document.getElementById("guessResponse").innerText = "Try again"

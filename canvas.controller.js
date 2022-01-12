@@ -12,6 +12,7 @@ let typeSelected = "pencil";
 let readOnly = false;
 const DRAWING_INTERVAL = 50;
 const PAUSE_INTERVAL = 3;
+const ROUNDS = 3;
 
 function drawPath(from, to) {
   /* from { x, y } 
@@ -129,6 +130,7 @@ eraser.onclick = onClickEraser;
 var currentlyDrawingUser = {};
 var correctWord;
 var guesses = 0;
+var currentRoundNumber = 1;
 
 var intervalId;
 
@@ -137,7 +139,11 @@ function subscribeCurrentlyDrawingUserListener() {
   var currentlyDrawingUserListener = firebase.database().ref(`images/${gameId}/currentRound/currentlyDrawingUser`);
   currentlyDrawingUserListener.on('value', (snapshot) => {
     const data = snapshot.val();
+    if(currentlyDrawingUser.uid === data.uid) {
+      return;
+    }
     currentlyDrawingUser = data;
+    console.log("currentlyDrawingUser", data, currentlyDrawingUser.displayName, uid, currentlyDrawingUser.uid)
     
     // disable drawing for all users, show message saying nextUser's turncontext.clearRect(0, 0, 800, 600);
     let overlay = document.getElementById("overlay");
@@ -146,26 +152,23 @@ function subscribeCurrentlyDrawingUserListener() {
     wordElement.classList.add("hidden");
     context.clearRect(0, 0, 800, 600);
     overlay.classList.remove("hidden");
+    overlayText.innerText = "";
 
     document.getElementById("guessResponse").innerText = "";
     document.getElementById("guess").value = "";
     document.getElementById("guess").disabled = false;
     firebase.database().ref(`/images/${gameId}/currentRound/guessedUsers/`).set(null);
     if(uid !== currentlyDrawingUser.uid) {
-      overlayText.childNodes[0].replaceWith(document.createTextNode(`${currentlyDrawingUser.displayName}'s turn`));
+      overlayText.innerText = `${currentlyDrawingUser.displayName}'s turn`;
       // add guess box
       document.getElementById("guessBox").style.display = "block";
     } else {
       let word = WORDS[Math.floor(Math.random(WORDS.length) * WORDS.length)]
-      overlayText.childNodes[0].replaceWith(document.createTextNode(`Your turn!\n Your word is: ${word}`));
+      overlayText.innerText = `Your turn!\n Your word is: ${word}`;
       firebase.database().ref(`/images/${gameId}/currentRound/word/`).set(word);
 
       document.getElementById("guessBox").style.display = "none";
-
     }
-
-    clearInterval(intervalId);
-    // intervalId = 0;
 
     setTimeout(() => {
       let overlay = document.getElementById("overlay");
@@ -173,17 +176,32 @@ function subscribeCurrentlyDrawingUserListener() {
       wordElement.classList.remove("hidden");
       context.clearRect(0, 0, 800, 600);
 
+      let childNodes = document.getElementById("userlist2").childNodes;
+      for(let node of childNodes) {
+        node.classList.remove("guessed");
+      }
+
       let remainingSeconds = DRAWING_INTERVAL;
       let timerElement = document.getElementById("timer");
   
       timerElement.innerText = remainingSeconds;
-      intervalId = setInterval(()=> {
-        remainingSeconds -= 1;
-        timerElement.innerText = remainingSeconds;
-        if(remainingSeconds <= 0) {
-          clearInterval(intervalId)
-        }
-      }, 1000);
+      function tick() {
+        setTimeout(() => {
+          remainingSeconds -= 1;
+          console.log(remainingSeconds, guesses, userList.length - 1)
+          timerElement.innerText = remainingSeconds;
+          if(remainingSeconds > 0 && guesses < userList.length - 1) {
+            tick();
+          } else {
+            console.log("else isadmin", guesses, userList.length - 1)
+            if(isAdmin) {
+              nextTurn();
+            }
+          }
+        }, 1000);
+      }
+      tick();
+      guesses = 0;
     }, PAUSE_INTERVAL * 1000);
 
     let childNodes = document.getElementById("userlist2").childNodes;
@@ -237,12 +255,20 @@ function subscribeCurrentlyDrawingUserListener() {
   firebase.database().ref(`images/${gameId}/currentRound/guessedUsers`).on('child_added', (data) => {
     const newGuessedUser = data.val().displayName;
     if(newGuessedUser && document.getElementById(newGuessedUser)) {
-      document.getElementById(newGuessedUser).style.backgroundColor = "lightgreen";
+      document.getElementById(newGuessedUser).classList.add("guessed");
       guesses++;
       if(guesses === userList.length - 1) {
-        // endTurn
-        nextTurn();
+        // nextTurn();
       }
+    }
+  });
+
+  var gameStateListener = firebase.database().ref(`images/${gameId}/gameState/`);
+  gameStateListener.on('value', (snapshot) => {
+    const data = snapshot.val();
+    var gameState = data;
+    if(gameState === "over") {
+      endGame();
     }
   });
 
@@ -251,16 +277,55 @@ function subscribeCurrentlyDrawingUserListener() {
     let newIndex = (currentlyDrawingUserIndex + 1) % userList.length;
     let nextUser = userList[newIndex];
     console.log("nextturn", userList, currentlyDrawingUser, currentlyDrawingUserIndex, newIndex, nextUser);
-    
-    firebase.database().ref(`/images/${gameId}/currentRound/currentlyDrawingUser/`).set(nextUser);
-    guesses = 0;
-    setTimeout(nextTurn, (DRAWING_INTERVAL + PAUSE_INTERVAL) * 1000)
+    // if next user admin and current round === ROUNDS, return
+    if(newIndex === 0) {
+      if(currentRoundNumber === ROUNDS) {
+        firebase.database().ref(`/images/${gameId}/gameState`).set("over");
+        return;
+      } else {
+        currentRoundNumber++;
+      }
+    } 
+
+    console.log("nextturn after", currentRoundNumber, newIndex);
+    if(currentRoundNumber <= ROUNDS || newIndex !== 0) {
+      firebase.database().ref(`/images/${gameId}/currentRound/currentlyDrawingUser/`).set(nextUser);
+    }
+    // setTimeout(nextTurn, (DRAWING_INTERVAL + PAUSE_INTERVAL) * 1000)
+  }
+
+  function endGame() {
+    let overlay = document.getElementById("overlay");
+    let overlayText = document.getElementById("overlayText");
+    overlay.classList.remove("hidden");
+
+    var userListListener = firebase.database().ref(`images/${gameId}/users`);
+    var userListFromFb = {};
+    userListListener.on('value', (snapshot) => {
+      const data = snapshot.val();
+      userListFromFb = data;
+      var userList = [];
+      var userListText = "";
+      for(let key in userListFromFb) {
+        let user = userListFromFb[key];
+        userList.push(user);
+      }
+
+      userList.sort((firstUser, secondUser) => (
+        secondUser.score - firstUser.score
+      ));
+      for(let user of userList) {
+        userListText +=  `${user.displayName}: ${user.score} \n`;
+      }
+
+      overlayText.innerText = `Game over!\n ${userListText}`;
+    });
   }
   
   // if admin. then set the next user's turn in the db
   console.log("isAdmin", isAdmin)
   if(isAdmin) {
     console.log("if isAdmin", isAdmin)
-    setTimeout(nextTurn, (DRAWING_INTERVAL + PAUSE_INTERVAL) * 1000);
+    // setTimeout(nextTurn, (DRAWING_INTERVAL + PAUSE_INTERVAL) * 1000);
   }
 }

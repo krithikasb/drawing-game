@@ -28,6 +28,10 @@ body {
   font-weight: 900;
 }
 
+#userlist2 li.guessed {
+  background-color: lightgreen;
+}
+
 .overlay {
   position: absolute;
   width: 100%;
