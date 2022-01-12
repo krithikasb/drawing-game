@@ -45,6 +45,7 @@
     <script src="firebase.js"></script>
     <script src="words.js"></script>
     <script src="canvas.controller.js"></script>
+    <script src="game.controller.js"></script>
     <script>
       const urlSearchParams = new URLSearchParams(window.location.search);
       var gameId = urlSearchParams.get("game");
@@ -137,7 +138,7 @@
           newListItem.appendChild(document.createTextNode(user.displayName));
           userListElement.appendChild(newListItem);
         }
-        subscribeCurrentlyDrawingUserListener();
+        listenToFirebaseChanges();
       }
 
       function onClickStop() {
