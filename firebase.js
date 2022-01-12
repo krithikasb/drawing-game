@@ -8,17 +8,17 @@ const GUESSED_USERS = "guessedUsers";
 function pathMapping(instance) {
   switch(instance) {
     case USERS:
-      return `images/${gameId}/users`;
+      return `${gameId}/users`;
     case GAME_STATE: 
-      return `images/${gameId}/gameState/`;
+      return `${gameId}/gameState/`;
     case CURRENTLY_DRAWING_USER: 
-      return `images/${gameId}/currentRound/currentlyDrawingUser`;
+      return `${gameId}/currentRound/currentlyDrawingUser`;
     case DRAWING: 
-      return `images/${gameId}/${currentlyDrawingUser.uid}`;
+      return `${gameId}/${currentlyDrawingUser.uid}`;
     case WORD: 
-      return `images/${gameId}/currentRound/word`;
+      return `${gameId}/currentRound/word`;
     case GUESSED_USERS: 
-      return `images/${gameId}/currentRound/guessedUsers`;
+      return `${gameId}/currentRound/guessedUsers`;
   }
 }
 
@@ -49,7 +49,7 @@ var userRef;
 //     }).then(function () {
 //       var displayName = user.displayName;
 //       console.log("fb", uid, displayName);
-//       firebase.database().ref(`/images/${gameId}/users/`).set({
+//       firebase.database().ref(`${gameId}/users/`).set({
 //         [displayName]: uid
 //       });
 //     });
@@ -73,7 +73,7 @@ function signInToFirebase() {
         displayName = user.displayName;
         console.log("fb", uid, displayName);
 
-        var userListRef = firebase.database().ref(`/images/${gameId}/users/`);
+        var userListRef = firebase.database().ref(`${gameId}/users/`);
         userRef = userListRef.push();
         userRef.set({
           uid: uid,
@@ -90,27 +90,27 @@ function signInToFirebase() {
 }
 
 function setAdminInFirebase(user) {
-  firebase.database().ref(`/images/${gameId}/admin`).set(user);
+  firebase.database().ref(`${gameId}/admin`).set(user);
 }
 
 function setGameStateInFirebase(gameState) {
-  firebase.database().ref(`/images/${gameId}/gameState/`).set(gameState);
+  firebase.database().ref(`${gameId}/gameState/`).set(gameState);
 }
 
 function setCurrentlyDrawingUserInFirebase(user) {
-  firebase.database().ref(`/images/${gameId}/currentRound/currentlyDrawingUser/`).set(user);
+  firebase.database().ref(`${gameId}/currentRound/currentlyDrawingUser/`).set(user);
 }
 
 function setWordInFirebase(word) {
-  firebase.database().ref(`/images/${gameId}/currentRound/word/`).set(word);
+  firebase.database().ref(`${gameId}/currentRound/word/`).set(word);
 }
 
 function setDrawingDataInFirebase(drawingData) {
-  firebase.database().ref(`/images/${gameId}/${uid}`).set(drawingData);
+  firebase.database().ref(`${gameId}/${uid}`).set(drawingData);
 }
 
 function pushGuessedUserInFirebase(user) {
-  firebase.database().ref(`/images/${gameId}/currentRound/guessedUsers`).push(user);
+  firebase.database().ref(`${gameId}/currentRound/guessedUsers`).push(user);
 }
 
 function updateCurrentUserScoreInFirebase(newScore) {
@@ -123,11 +123,11 @@ function updateCurrentUserScoreInFirebase(newScore) {
 }
 
 function resetGuessedUsersInFirebase() {
-  firebase.database().ref(`/images/${gameId}/currentRound/guessedUsers/`).set(null);
+  firebase.database().ref(`${gameId}/currentRound/guessedUsers/`).set(null);
 }
 
 function deleteGameInFirebase() {
-  firebase.database().ref(`/images/${gameId}`).set(null);
+  firebase.database().ref(`${gameId}`).set(null);
 }
 
 function listenToFirebaseValueChange(instance, callback) {
