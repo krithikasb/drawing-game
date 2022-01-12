@@ -67,7 +67,7 @@ function onMouseMove(e) {
     x = e.clientX - offsetLeft;
     y = e.clientY - offsetTop;
     drawPath({x: previousX, y: previousY}, {x, y});
-    firebase.database().ref(`/images/${gameId}/${uid}`).set({
+    setDrawingDataInFirebase({
       type: typeSelected,
       start: {x: previousX, y: previousY},
       end: {x, y}
@@ -136,9 +136,7 @@ var intervalId;
 
 function subscribeCurrentlyDrawingUserListener() {
   /* toggles between drawing and reading mode */
-  var currentlyDrawingUserListener = firebase.database().ref(`images/${gameId}/currentRound/currentlyDrawingUser`);
-  currentlyDrawingUserListener.on('value', (snapshot) => {
-    const data = snapshot.val();
+  function onCurrentlyDrawingUserChange(data) {
     if(currentlyDrawingUser.uid === data.uid) {
       return;
     }
@@ -157,7 +155,7 @@ function subscribeCurrentlyDrawingUserListener() {
     document.getElementById("guessResponse").innerText = "";
     document.getElementById("guess").value = "";
     document.getElementById("guess").disabled = false;
-    firebase.database().ref(`/images/${gameId}/currentRound/guessedUsers/`).set(null);
+    resetGuessedUsersInFirebase();
     if(uid !== currentlyDrawingUser.uid) {
       overlayText.innerText = `${currentlyDrawingUser.displayName}'s turn`;
       // add guess box
@@ -165,7 +163,7 @@ function subscribeCurrentlyDrawingUserListener() {
     } else {
       let word = WORDS[Math.floor(Math.random(WORDS.length) * WORDS.length)]
       overlayText.innerText = `Your turn!\n Your word is: ${word}`;
-      firebase.database().ref(`/images/${gameId}/currentRound/word/`).set(word);
+      setWordInFirebase(word);
 
       document.getElementById("guessBox").classList.add("hidden");
     }
@@ -217,17 +215,17 @@ function subscribeCurrentlyDrawingUserListener() {
       canvas.removeEventListener("mouseup", onMouseUp);
       canvas.removeEventListener("mouseout", onMouseOut);
       canvas.removeEventListener("mouseenter", onMouseEnter);
-      var img = firebase.database().ref(`images/${gameId}/${currentlyDrawingUser.uid}`);
-      img.on('value', (snapshot) => {
-        const data = snapshot.val();
-        console.log("fb", data);
+
+      function onDraw(data) {
         if(data) {
           if(data.type !== typeSelected) {
             changeStroke(data.type);
           }
           drawPath(data.start, data.end);
         }
-      });
+      }
+      
+      listenToFirebaseValueChange(DRAWING, onDraw);
     } else {
       readOnly = false;
       canvas.addEventListener("mousedown", onMouseDown);
@@ -236,11 +234,10 @@ function subscribeCurrentlyDrawingUserListener() {
       canvas.addEventListener("mouseout", onMouseOut);
       canvas.addEventListener("mouseenter", onMouseEnter);
     }
-  });
+  }
+  listenToFirebaseValueChange(CURRENTLY_DRAWING_USER, onCurrentlyDrawingUserChange);
 
-  var correctWordListener = firebase.database().ref(`images/${gameId}/currentRound/word`);
-  correctWordListener.on('value', (snapshot) => {
-    const data = snapshot.val();
+  function onWordChange(data) {
     correctWord = data;
 
     let wordElement = document.getElementById("word");
@@ -249,11 +246,12 @@ function subscribeCurrentlyDrawingUserListener() {
     } else {
       wordElement.childNodes[0].replaceWith(document.createTextNode(correctWord));
     }
-  });
+  }
+  listenToFirebaseValueChange(WORD, onWordChange);
 
   // listen for guessedUsers
-  firebase.database().ref(`images/${gameId}/currentRound/guessedUsers`).on('child_added', (data) => {
-    const newGuessedUser = data.val().displayName;
+  function onAddGuessedUser(data) {
+    const newGuessedUser = data.displayName;
     if(newGuessedUser && document.getElementById(newGuessedUser)) {
       document.getElementById(newGuessedUser).classList.add("guessed");
       guesses++;
@@ -261,16 +259,16 @@ function subscribeCurrentlyDrawingUserListener() {
         // nextTurn();
       }
     }
-  });
+  }
+  listenToFirebaseChildAdded(GUESSED_USERS, onAddGuessedUser);
 
-  var gameStateListener = firebase.database().ref(`images/${gameId}/gameState/`);
-  gameStateListener.on('value', (snapshot) => {
-    const data = snapshot.val();
+  function onGameStateChange(data) {
     var gameState = data;
     if(gameState === "over") {
       endGame();
     }
-  });
+  }
+  listenToFirebaseValueChange(GAME_STATE, onGameStateChange)
 
   function nextTurn() {
     let currentlyDrawingUserIndex = userList.findIndex(user => user.uid === currentlyDrawingUser.uid);
@@ -280,10 +278,10 @@ function subscribeCurrentlyDrawingUserListener() {
     // if next user admin and current round === ROUNDS, return
     if(newIndex === 0) {
       if(currentRoundNumber === ROUNDS) {
-        firebase.database().ref(`/images/${gameId}/gameState`).set("over");
+        setGameStateInFirebase("over");
 
         setTimeout(() => {
-          firebase.database().ref(`/images/${gameId}`).set(null);
+          deleteGameInFirebase();
         }, 30000);
 
         return;
@@ -294,7 +292,7 @@ function subscribeCurrentlyDrawingUserListener() {
 
     console.log("nextturn after", currentRoundNumber, newIndex);
     if(currentRoundNumber <= ROUNDS || newIndex !== 0) {
-      firebase.database().ref(`/images/${gameId}/currentRound/currentlyDrawingUser/`).set(nextUser);
+      setCurrentlyDrawingUserInFirebase(nextUser);
     }
     // setTimeout(nextTurn, (DRAWING_INTERVAL + PAUSE_INTERVAL) * 1000)
   }
@@ -304,10 +302,8 @@ function subscribeCurrentlyDrawingUserListener() {
     let overlayText = document.getElementById("overlayText");
     overlay.classList.remove("hidden");
 
-    var userListListener = firebase.database().ref(`images/${gameId}/users`);
     var userListFromFb = {};
-    userListListener.on('value', (snapshot) => {
-      const data = snapshot.val();
+    function onChangeUsers(data) {
       userListFromFb = data;
       var userList = [];
       var userListText = "";
@@ -324,7 +320,9 @@ function subscribeCurrentlyDrawingUserListener() {
       }
 
       overlayText.innerText = `Game over!\n\n ${userListText}`;
-    });
+    }
+
+    listenToFirebaseValueChange(USERS, onChangeUsers);
   }
   
   // if admin. then set the next user's turn in the db

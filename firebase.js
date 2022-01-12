@@ -1,3 +1,27 @@
+const USERS = "users";
+const GAME_STATE = "gameState";
+const CURRENTLY_DRAWING_USER = "currentlyDrawingUser";
+const DRAWING = "drawing";
+const WORD = "word";
+const GUESSED_USERS = "guessedUsers";
+
+function pathMapping(instance) {
+  switch(instance) {
+    case USERS:
+      return `images/${gameId}/users`;
+    case GAME_STATE: 
+      return `images/${gameId}/gameState/`;
+    case CURRENTLY_DRAWING_USER: 
+      return `images/${gameId}/currentRound/currentlyDrawingUser`;
+    case DRAWING: 
+      return `images/${gameId}/${currentlyDrawingUser.uid}`;
+    case WORD: 
+      return `images/${gameId}/currentRound/word`;
+    case GUESSED_USERS: 
+      return `images/${gameId}/currentRound/guessedUsers`;
+  }
+}
+
 // Your web app's Firebase configuration
 var firebaseConfig = {
   apiKey: "AIzaSyBdQkLQPtVvcHpBU9UV6kd-FkG89504Px0",
@@ -36,7 +60,7 @@ var userRef;
 //   }
 // });
 
- function firebaseSignIn() {
+function signInToFirebase() {
   firebase.auth().signInAnonymously()
     .then((response) => {
       // Signed in..
@@ -63,4 +87,61 @@ var userRef;
       var errorMessage = error.message;
       // ...
     });
+}
+
+function setAdminInFirebase(user) {
+  firebase.database().ref(`/images/${gameId}/admin`).set(user);
+}
+
+function setGameStateInFirebase(gameState) {
+  firebase.database().ref(`/images/${gameId}/gameState/`).set(gameState);
+}
+
+function setCurrentlyDrawingUserInFirebase(user) {
+  firebase.database().ref(`/images/${gameId}/currentRound/currentlyDrawingUser/`).set(user);
+}
+
+function setWordInFirebase(word) {
+  firebase.database().ref(`/images/${gameId}/currentRound/word/`).set(word);
+}
+
+function setDrawingDataInFirebase(drawingData) {
+  firebase.database().ref(`/images/${gameId}/${uid}`).set(drawingData);
+}
+
+function pushGuessedUserInFirebase(user) {
+  firebase.database().ref(`/images/${gameId}/currentRound/guessedUsers`).push(user);
+}
+
+function updateCurrentUserScoreInFirebase(newScore) {
+  score = newScore;
+  userRef.set({
+    uid: uid,
+    displayName: displayName,
+    score: score
+  });
+}
+
+function resetGuessedUsersInFirebase() {
+  firebase.database().ref(`/images/${gameId}/currentRound/guessedUsers/`).set(null);
+}
+
+function deleteGameInFirebase() {
+  firebase.database().ref(`/images/${gameId}`).set(null);
+}
+
+function listenToFirebaseValueChange(instance, callback) {
+  var listener = firebase.database().ref(pathMapping(instance));
+  listener.on('value', (snapshot) => {
+    const data = snapshot.val();
+    callback(data);
+  });
+}
+
+function listenToFirebaseChildAdded(instance, callback) {
+  var listener = firebase.database().ref(pathMapping(instance));
+  listener.on('child_added', (snapshot) => {
+    const data = snapshot.val();
+    callback(data);
+  });
 }

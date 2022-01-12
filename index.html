@@ -72,11 +72,9 @@
         document.getElementById("homepage").style.display = "none";
         document.getElementById("lobby").style.display = "block";
         document.getElementById("game").style.display = "none";
-        firebaseSignIn();    
-        var userListListener = firebase.database().ref(`images/${gameId}/users`);
+        signInToFirebase();    
         var userListFromFb = {};
-        userListListener.on('value', (snapshot) => {
-          const data = snapshot.val();
+        function onUserListChange(data) {
           userListFromFb = data;
           console.log("userlistlistener", data);
           userList = [];
@@ -93,33 +91,33 @@
             if(Object.keys(userListFromFb).length === 1 && user.displayName === displayName) {
               isAdmin = true;
               document.getElementById("start").disabled = false;
-              firebase.database().ref(`/images/${gameId}/admin`).set({
+              setAdminInFirebase({
                 uid: uid,
                 displayName: displayName
               });
-              firebase.database().ref(`/images/${gameId}/currentRound/currentlyDrawingUser/`).set({
+              setCurrentlyDrawingUserInFirebase({
                 uid: uid,
                 displayName: displayName
               });
-              firebase.database().ref(`/images/${gameId}/gameState`).set("lobby");
+              setGameStateInFirebase("lobby");
             }
           }
           if(!isAdmin) {
-            var gameStateListener = firebase.database().ref(`images/${gameId}/gameState`);
-            gameStateListener.on('value', (snapshot) => {
-              const data = snapshot.val();
+            function onGameStateChange(data) {
               if(data === "started") {
                 startGame();
               }
-            });
+            }
+            listenToFirebaseValueChange(GAME_STATE, onGameStateChange);
           }
-        });
+        }
+        listenToFirebaseValueChange(USERS, onUserListChange);
       }
 
       function onClickStart() {
         startGame();
         if(isAdmin) {
-          firebase.database().ref(`/images/${gameId}/gameState`).set("started");
+          setGameStateInFirebase("started");
         }
       }
 
@@ -157,18 +155,13 @@
           document.getElementById("guess").disabled = true;
 
           //push guessed user
-          firebase.database().ref(`/images/${gameId}/currentRound/guessedUsers`).push({
+          pushGuessedUserInFirebase({
             uid: uid,
             displayName: displayName
           });
 
           // update current user score
-          score += 10;
-          userRef.set({
-            uid: uid,
-            displayName: displayName,
-            score: score
-          });
+          updateCurrentUserScoreInFirebase(score + 10);
         } else {
           document.getElementById("guessResponse").innerText = "Try again"
           guessValue = "";
