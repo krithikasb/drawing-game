@@ -281,6 +281,11 @@ function subscribeCurrentlyDrawingUserListener() {
     if(newIndex === 0) {
       if(currentRoundNumber === ROUNDS) {
         firebase.database().ref(`/images/${gameId}/gameState`).set("over");
+
+        setTimeout(() => {
+          firebase.database().ref(`/images/${gameId}`).set(null);
+        }, 30000);
+
         return;
       } else {
         currentRoundNumber++;
