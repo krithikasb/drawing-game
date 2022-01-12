@@ -161,13 +161,13 @@ function subscribeCurrentlyDrawingUserListener() {
     if(uid !== currentlyDrawingUser.uid) {
       overlayText.innerText = `${currentlyDrawingUser.displayName}'s turn`;
       // add guess box
-      document.getElementById("guessBox").style.display = "block";
+      document.getElementById("guessBox").classList.remove("hidden");
     } else {
       let word = WORDS[Math.floor(Math.random(WORDS.length) * WORDS.length)]
       overlayText.innerText = `Your turn!\n Your word is: ${word}`;
       firebase.database().ref(`/images/${gameId}/currentRound/word/`).set(word);
 
-      document.getElementById("guessBox").style.display = "none";
+      document.getElementById("guessBox").classList.add("hidden");
     }
 
     setTimeout(() => {

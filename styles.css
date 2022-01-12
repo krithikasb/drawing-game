@@ -63,3 +63,7 @@ body {
 .word.hidden {
   opacity: 0;
 }
+
+.guessBox.hidden {
+  display: none;
+}
