@@ -39,26 +39,6 @@ var displayName;
 var isAdmin = false;
 var score = 0;
 var userRef;
-// firebase.auth().onAuthStateChanged((user) => {
-//   if (user) {
-//     // User is signed in, see docs for a list of available properties
-//     // https://firebase.google.com/docs/reference/js/firebase.User
-//     uid = user.uid;
-//     user.updateProfile({
-//       displayName: userName,
-//     }).then(function () {
-//       var displayName = user.displayName;
-//       console.log("fb", uid, displayName);
-//       firebase.database().ref(`${gameId}/users/`).set({
-//         [displayName]: uid
-//       });
-//     });
-//     // ...
-//   } else {
-//     // User is signed out
-//     // ...
-//   }
-// });
 
 function signInToFirebase() {
   firebase.auth().signInAnonymously()
@@ -85,6 +65,7 @@ function signInToFirebase() {
     .catch((error) => {
       var errorCode = error.code;
       var errorMessage = error.message;
+      console.log("firebase sign in error", errorCode, errorMessage)
       // ...
     });
 }
