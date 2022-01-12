@@ -323,7 +323,7 @@ function subscribeCurrentlyDrawingUserListener() {
         userListText +=  `${user.displayName}: ${user.score} \n`;
       }
 
-      overlayText.innerText = `Game over!\n ${userListText}`;
+      overlayText.innerText = `Game over!\n\n ${userListText}`;
     });
   }
   
