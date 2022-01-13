@@ -13,7 +13,7 @@ if(gameId) {
 
 function showHomepage() {
   document.getElementById("game").classList.add("hidden");
-  document.getElementById("lobby").classList.remove("hidden");
+  document.getElementById("lobby").classList.add("hidden");
   document.getElementById("homepage").classList.remove("hidden");
 }
 
