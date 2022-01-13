@@ -10,18 +10,18 @@
         https://firebase.google.com/docs/web/setup#available-libraries -->
   </head>
   <body>
-    <div id="homepage">
+    <div id="homepage" class="homepage">
       <h1>Hello homepage!</h1>
       <input id="gameIdInput" placeholder="Enter game ID"/>
       <input id="userIdInput" placeholder="Enter user ID"/>
       <button id="create" onclick="onClickJoin()">Create/Join Game</button>
     </div>
-    <div id="lobby" style="display: none;">
+    <div id="lobby" class="lobby hidden">
       <h1>Hello lobby!</h1>
       <ul id="userlist"></ul>
       <button disabled id="start" onclick="onClickStart()">Start Game</button>
     </div>
-    <div id="game" style="display: none;">
+    <div id="game" class="game hidden">
       <h1 id="timer">&nbsp;</h1>
       <h1 id="word" class="word">&nbsp;</h1>
       <div class="canvasWrapper">

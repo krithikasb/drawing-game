@@ -6,10 +6,27 @@ var userList = [];
 if(gameId) {
   document.getElementById("gameIdInput").value = gameId;
 } else {
-  document.getElementById("game").style.display = "none";
-  document.getElementById("homepage").style.display = "block";
+  showHomepage();
   document.getElementById("gameIdInput").value = "game" + Math.floor(Math.random(1000) * 1000);
   document.getElementById("userIdInput").value = "user" + Math.floor(Math.random(1000) * 1000);
+}
+
+function showHomepage() {
+  document.getElementById("game").classList.add("hidden");
+  document.getElementById("lobby").classList.remove("hidden");
+  document.getElementById("homepage").classList.remove("hidden");
+}
+
+function showLobby() {
+  document.getElementById("homepage").classList.add("hidden");
+  document.getElementById("lobby").classList.remove("hidden");
+  document.getElementById("game").classList.add("hidden");
+}
+
+function showGame() {
+  document.getElementById("homepage").classList.add("hidden");
+  document.getElementById("lobby").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
 }
 
 function onClickJoin() {
@@ -18,10 +35,8 @@ function onClickJoin() {
   userName = document.getElementById("userIdInput").value || "user1"
   history.pushState({game: gameName}, "title 1", `?game=${gameName}`);
   console.log(history.state);
-  document.getElementById("homepage").style.display = "none";
-  document.getElementById("lobby").style.display = "block";
-  document.getElementById("game").style.display = "none";
-  signInToFirebase();    
+  showLobby();
+  signInToFirebase();
   var userListFromFb = {};
   function onUserListChange(data) {
     userListFromFb = data;
@@ -37,6 +52,7 @@ function onClickJoin() {
         userListElement.appendChild(newListItem);
         userMapping[user.displayName] = user.uid;
       }
+      // set the first user as admin and as the first user to draw
       if(Object.keys(userListFromFb).length === 1 && user.displayName === displayName) {
         isAdmin = true;
         document.getElementById("start").disabled = false;
@@ -71,9 +87,7 @@ function onClickStart() {
 }
 
 function startGame() {
-  document.getElementById("homepage").style.display = "none";
-  document.getElementById("lobby").style.display = "none";
-  document.getElementById("game").style.display = "block";
+  showGame();
   document.getElementById("userlist2").innerHTML = "";
   for(let i = 0; i < userList.length; i++) {
     let user = userList[i];
@@ -92,9 +106,7 @@ function startGame() {
 function onClickStop() {
   history.back();
   console.log(history.state);
-  document.getElementById("game").style.display = "none";
-  document.getElementById("lobby").style.display = "none";
-  document.getElementById("homepage").style.display = "block";
+  showHomepage();
 }
 
 function onClickGuess(e) {

@@ -2,6 +2,18 @@ body {
   background-color: lavender;
 }
 
+.homepage.hidden {
+  display: none;
+}
+
+.lobby.hidden {
+  display: none;
+}
+
+.game.hidden {
+  display: none;
+}
+
 .canvasWrapper {
   width: 800px;
   height: 600px;
