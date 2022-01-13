@@ -24,18 +24,20 @@
     <div id="game" class="game hidden">
       <h1 id="timer">&nbsp;</h1>
       <h1 id="word" class="word">&nbsp;</h1>
-      <div class="canvasWrapper">
-        <canvas id="canvas" width="800" height="600"></canvas>
-        <div id="overlay" class="overlay hidden">
-          <div id="overlayText">nextUser's turn</div>
+      <div class="wrapper">
+        <div class="canvasWrapper">
+          <canvas id="canvas" width="800" height="600"></canvas>
+          <div id="overlay" class="overlay hidden">
+            <div id="overlayText">nextUser's turn</div>
+          </div>
         </div>
+        <ul id="userlist2"></ul>
       </div>
       <div id="guessBox" class="guessBox">
         <p id="guessResponse">&nbsp;</p>
         <input type="text" id="guess" />
         <button type="submit" onclick="onClickGuess()">Guess</button>
       </div>
-      <ul id="userlist2"></ul>
       <div class="toolbarWrapper">
         <button id="pencil" class="selected">Pencil</button>
         <button id="eraser">Eraser</button>
