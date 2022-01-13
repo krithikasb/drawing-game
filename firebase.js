@@ -5,8 +5,8 @@ const DRAWING = "drawing";
 const WORD = "word";
 const GUESSED_USERS = "guessedUsers";
 
-function pathMapping(instance) {
-  switch(instance) {
+function pathMapping(node) {
+  switch(node) {
     case USERS:
       return `${gameId}/users`;
     case GAME_STATE: 
@@ -111,16 +111,16 @@ function deleteGameInFirebase() {
   firebase.database().ref(`${gameId}`).set(null);
 }
 
-function listenToFirebaseValueChange(instance, callback) {
-  var listener = firebase.database().ref(pathMapping(instance));
+function listenToFirebaseValueChange(node, callback) {
+  var listener = firebase.database().ref(pathMapping(node));
   listener.on('value', (snapshot) => {
     const data = snapshot.val();
     callback(data);
   });
 }
 
-function listenToFirebaseChildAdded(instance, callback) {
-  var listener = firebase.database().ref(pathMapping(instance));
+function listenToFirebaseChildAdded(node, callback) {
+  var listener = firebase.database().ref(pathMapping(node));
   listener.on('child_added', (snapshot) => {
     const data = snapshot.val();
     callback(data);
