@@ -1,146 +1,120 @@
-const DRAWING_INTERVAL = 50;
-const PAUSE_INTERVAL = 3;
-const ROUNDS = 3;
+const urlSearchParams = new URLSearchParams(window.location.search);
+var gameId = urlSearchParams.get("game");
+var userName = "";
+var userMapping = {};
+var userList = [];
+if(gameId) {
+  document.getElementById("gameIdInput").value = gameId;
+} else {
+  document.getElementById("game").style.display = "none";
+  document.getElementById("homepage").style.display = "block";
+  document.getElementById("gameIdInput").value = "game" + Math.floor(Math.random(1000) * 1000);
+  document.getElementById("userIdInput").value = "user" + Math.floor(Math.random(1000) * 1000);
+}
 
-var currentlyDrawingUser = {};
-var correctWord;
-var guesses = 0;
-var currentRoundNumber = 1;
-
-function onCurrentlyDrawingUserChange(data) {
-  if(currentlyDrawingUser.uid === data.uid) {
-    return;
-  }
-  currentlyDrawingUser = data;
-  console.log("currentlyDrawingUser", data, currentlyDrawingUser.displayName, uid, currentlyDrawingUser.uid)
-  
-  // disable drawing for all users, show message saying nextUser's turncontext.clearRect(0, 0, 800, 600);
-  let overlay = document.getElementById("overlay");
-  let overlayText = document.getElementById("overlayText");
-  let wordElement = document.getElementById("word");
-  wordElement.classList.add("hidden");
-  context.clearRect(0, 0, 800, 600);
-  overlay.classList.remove("hidden");
-  overlayText.innerText = "";
-
-  document.getElementById("guessResponse").innerText = "";
-  document.getElementById("guess").value = "";
-  document.getElementById("guess").disabled = false;
-  resetGuessedUsersInFirebase();
-  if(uid !== currentlyDrawingUser.uid) {
-    overlayText.innerText = `${currentlyDrawingUser.displayName}'s turn`;
-    // add guess box
-    document.getElementById("guessBox").classList.remove("hidden");
-  } else {
-    let word = WORDS[Math.floor(Math.random(WORDS.length) * WORDS.length)]
-    overlayText.innerText = `Your turn!\n Your word is: ${word}`;
-    setWordInFirebase(word);
-
-    document.getElementById("guessBox").classList.add("hidden");
-  }
-
-  setTimeout(() => {
-    let overlay = document.getElementById("overlay");
-    overlay.classList.add("hidden");
-    wordElement.classList.remove("hidden");
-    context.clearRect(0, 0, 800, 600);
-
-    let childNodes = document.getElementById("userlist2").childNodes;
-    for(let node of childNodes) {
-      node.classList.remove("guessed");
+function onClickJoin() {
+  const gameName = document.getElementById("gameIdInput").value || gameId;
+  gameId = gameName;
+  userName = document.getElementById("userIdInput").value || "user1"
+  history.pushState({game: gameName}, "title 1", `?game=${gameName}`);
+  console.log(history.state);
+  document.getElementById("homepage").style.display = "none";
+  document.getElementById("lobby").style.display = "block";
+  document.getElementById("game").style.display = "none";
+  signInToFirebase();    
+  var userListFromFb = {};
+  function onUserListChange(data) {
+    userListFromFb = data;
+    console.log("userlistlistener", data);
+    userList = [];
+    for(let key in userListFromFb) {
+      let user = userListFromFb[key];
+      userList.push(user);
+      if(!userMapping[user.displayName]) {
+        const userListElement = document.getElementById("userlist");
+        const newListItem = document.createElement("li");
+        newListItem.appendChild(document.createTextNode(user.displayName));
+        userListElement.appendChild(newListItem);
+        userMapping[user.displayName] = user.uid;
+      }
+      if(Object.keys(userListFromFb).length === 1 && user.displayName === displayName) {
+        isAdmin = true;
+        document.getElementById("start").disabled = false;
+        setAdminInFirebase({
+          uid: uid,
+          displayName: displayName
+        });
+        setCurrentlyDrawingUserInFirebase({
+          uid: uid,
+          displayName: displayName
+        });
+        setGameStateInFirebase("lobby");
+      }
     }
-
-    let remainingSeconds = DRAWING_INTERVAL;
-    let timerElement = document.getElementById("timer");
-
-    timerElement.innerText = remainingSeconds;
-    function tick() {
-      setTimeout(() => {
-        remainingSeconds -= 1;
-        console.log(remainingSeconds, guesses, userList.length - 1)
-        timerElement.innerText = remainingSeconds;
-        if(remainingSeconds > 0 && guesses < userList.length - 1) {
-          tick();
-        } else {
-          console.log("else isadmin", guesses, userList.length - 1)
-          if(isAdmin) {
-            nextTurn();
-          }
+    if(!isAdmin) {
+      function onGameStateChange(data) {
+        if(data === "started") {
+          startGame();
         }
-      }, 1000);
+      }
+      listenToFirebaseValueChange(GAME_STATE, onGameStateChange);
     }
-    tick();
-    guesses = 0;
-  }, PAUSE_INTERVAL * 1000);
-
-  let childNodes = document.getElementById("userlist2").childNodes;
-  for(let node of childNodes) {
-    node.classList.remove("highlighted");
   }
-  document.getElementById(currentlyDrawingUser.displayName).classList.add("highlighted");
+  listenToFirebaseValueChange(USERS, onUserListChange);
+}
 
-  if(currentlyDrawingUser.displayName !== displayName) {
-    makeCanvasReadOnly();
+function onClickStart() {
+  startGame();
+  if(isAdmin) {
+    setGameStateInFirebase("started");
+  }
+}
+
+function startGame() {
+  document.getElementById("homepage").style.display = "none";
+  document.getElementById("lobby").style.display = "none";
+  document.getElementById("game").style.display = "block";
+  document.getElementById("userlist2").innerHTML = "";
+  for(let i = 0; i < userList.length; i++) {
+    let user = userList[i];
+    const userListElement = document.getElementById("userlist2");
+    const newListItem = document.createElement("li");
+    newListItem.id = user.displayName;
+    if(i === userList.length - 1) {
+      newListItem.classList.add("highlighted")
+    }
+    newListItem.appendChild(document.createTextNode(user.displayName));
+    userListElement.appendChild(newListItem);
+  }
+  listenToFirebaseChanges();
+}
+
+function onClickStop() {
+  history.back();
+  console.log(history.state);
+  document.getElementById("game").style.display = "none";
+  document.getElementById("lobby").style.display = "none";
+  document.getElementById("homepage").style.display = "block";
+}
+
+function onClickGuess(e) {
+  let guessValue = document.getElementById("guess").value;
+  if(guessValue.trim().toLowerCase() === correctWord.toLowerCase()) {
+    document.getElementById("guessResponse").innerText = "You guessed it!";
+    document.getElementById("guess").disabled = true;
+
+    //push guessed user
+    pushGuessedUserInFirebase({
+      uid: uid,
+      displayName: displayName
+    });
+
+    // update current user score
+    updateCurrentUserScoreInFirebase(score + 10);
   } else {
-    makeCanvasDrawable();
+    document.getElementById("guessResponse").innerText = "Try again"
+    guessValue = "";
   }
-}
-
-function onWordChange(data) {
-  correctWord = data;
-
-  let wordElement = document.getElementById("word");
-  if(uid !== currentlyDrawingUser.uid) {
-    wordElement.childNodes[0].replaceWith(document.createTextNode("".padEnd(correctWord.length, "_")));
-  } else {
-    wordElement.childNodes[0].replaceWith(document.createTextNode(correctWord));
-  }
-}
-
-// listen for guessedUsers
-function onAddGuessedUser(data) {
-  const newGuessedUser = data.displayName;
-  if(newGuessedUser && document.getElementById(newGuessedUser)) {
-    document.getElementById(newGuessedUser).classList.add("guessed");
-    guesses++;
-    if(guesses === userList.length - 1) {
-      // nextTurn();
-    }
-  }
-}
-
-function onGameStateChange(data) {
-  var gameState = data;
-  if(gameState === "over") {
-    endGame();
-  }
-}
-
-function nextTurn() {
-  let currentlyDrawingUserIndex = userList.findIndex(user => user.uid === currentlyDrawingUser.uid);
-  let newIndex = (currentlyDrawingUserIndex + 1) % userList.length;
-  let nextUser = userList[newIndex];
-  console.log("nextturn", userList, currentlyDrawingUser, currentlyDrawingUserIndex, newIndex, nextUser, currentRoundNumber);
-  // if next user admin and current round === ROUNDS, end the game
-  if(newIndex === 0) {
-    if(currentRoundNumber === ROUNDS) {
-      setGameStateInFirebase("over");
-
-      setTimeout(() => {
-        deleteGameInFirebase();
-      }, 30000);
-
-      return;
-    } else {
-      currentRoundNumber++;
-    }
-  } 
-
-  console.log("nextturn after", currentRoundNumber, newIndex);
-  if(currentRoundNumber <= ROUNDS || newIndex !== 0) {
-    setCurrentlyDrawingUserInFirebase(nextUser);
-  }
-  // setTimeout(nextTurn, (DRAWING_INTERVAL + PAUSE_INTERVAL) * 1000)
 }
 
 function endGame() {
@@ -148,11 +122,10 @@ function endGame() {
   let overlayText = document.getElementById("overlayText");
   overlay.classList.remove("hidden");
 
-  var userListFromFb = {};
-  function onChangeUsers(data) {
-    userListFromFb = data;
-    var userList = [];
-    var userListText = "";
+  function displayGameOverAndScores(data) {
+    let userListFromFb = data;
+    let userList = [];
+    let userListText = "";
     for(let key in userListFromFb) {
       let user = userListFromFb[key];
       userList.push(user);
@@ -168,12 +141,5 @@ function endGame() {
     overlayText.innerText = `Game over!\n\n ${userListText}`;
   }
 
-  listenToFirebaseValueChange(USERS, onChangeUsers);
-}
-
-function listenToFirebaseChanges() {
-  listenToFirebaseValueChange(CURRENTLY_DRAWING_USER, onCurrentlyDrawingUserChange);
-  listenToFirebaseValueChange(WORD, onWordChange);
-  listenToFirebaseChildAdded(GUESSED_USERS, onAddGuessedUser);
-  listenToFirebaseValueChange(GAME_STATE, onGameStateChange);
+  listenToFirebaseValueChange(USERS, displayGameOverAndScores);
 }

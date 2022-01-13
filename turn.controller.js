@@ -151,33 +151,6 @@ function nextTurn() {
   }
 }
 
-function endGame() {
-  let overlay = document.getElementById("overlay");
-  let overlayText = document.getElementById("overlayText");
-  overlay.classList.remove("hidden");
-
-  function displayGameOverAndScores(data) {
-    let userListFromFb = data;
-    let userList = [];
-    let userListText = "";
-    for(let key in userListFromFb) {
-      let user = userListFromFb[key];
-      userList.push(user);
-    }
-
-    userList.sort((firstUser, secondUser) => (
-      secondUser.score - firstUser.score
-    ));
-    for(let user of userList) {
-      userListText +=  `${user.displayName}: ${user.score} \n`;
-    }
-
-    overlayText.innerText = `Game over!\n\n ${userListText}`;
-  }
-
-  listenToFirebaseValueChange(USERS, displayGameOverAndScores);
-}
-
 function listenToFirebaseChanges() {
   listenToFirebaseValueChange(CURRENTLY_DRAWING_USER, onCurrentlyDrawingUserChange);
   listenToFirebaseValueChange(WORD, onWordChange);
