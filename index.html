@@ -11,37 +11,37 @@
   </head>
   <body>
     <div id="homepage" class="homepage">
-      <h1>Hello homepage!</h1>
-      <input id="gameIdInput" placeholder="Enter game ID"/>
-      <input id="userIdInput" placeholder="Enter user ID"/>
+      <input id="gameIdInput" placeholder="Enter game ID" autocomplete="off"/>
+      <input id="userIdInput" placeholder="Enter user ID" autocomplete="off"/>
       <button id="create" onclick="onClickJoin()">Create/Join Game</button>
     </div>
     <div id="lobby" class="lobby hidden">
-      <h1>Hello lobby!</h1>
       <ul id="userlist"></ul>
       <button disabled id="start" onclick="onClickStart()">Start Game</button>
     </div>
     <div id="game" class="game hidden">
-      <h1 id="timer">&nbsp;</h1>
-      <h1 id="word" class="word">&nbsp;</h1>
       <div class="wrapper">
+        <h1 id="timer">&nbsp;</h1>
+        <h1 id="word" class="word">&nbsp;</h1>
         <div class="canvasWrapper">
           <canvas id="canvas" width="800" height="600"></canvas>
           <div id="overlay" class="overlay hidden">
             <div id="overlayText">nextUser's turn</div>
           </div>
         </div>
+        <div id="guessBox" class="guessBox">
+          <p id="guessResponse">&nbsp;</p>
+          <input type="text" id="guess" autocomplete="off"/>
+          <button type="submit" onclick="onClickGuess()">Guess</button>
+        </div>
+        <div id="toolbar" class="toolbarWrapper">
+          <button id="pencil" class="selected">Pencil</button>
+          <button id="eraser">Eraser</button>
+          <button id="stop" onclick="onClickStop()">Stop Game</button>
+        </div>
+      </div>
+      <div class="userlistWrapper">
         <ul id="userlist2"></ul>
-      </div>
-      <div id="guessBox" class="guessBox">
-        <p id="guessResponse">&nbsp;</p>
-        <input type="text" id="guess" />
-        <button type="submit" onclick="onClickGuess()">Guess</button>
-      </div>
-      <div class="toolbarWrapper">
-        <button id="pencil" class="selected">Pencil</button>
-        <button id="eraser">Eraser</button>
-        <button id="stop" onclick="onClickStop()">Stop Game</button>
       </div>
     </div>
     <script src="firebase.js"></script>

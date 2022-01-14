@@ -28,6 +28,7 @@ function setupCurrentTurn() {
     // if its not currentuser's turn, show guess box
     overlayText.innerText = `${currentlyDrawingUser.displayName}'s turn`;
     document.getElementById("guessBox").classList.remove("hidden");
+    document.getElementById("toolbar").classList.add("hidden");
   } else {
     // if its currentuser's turn, set a word and hide guess box
     let word = WORDS[Math.floor(Math.random(WORDS.length) * WORDS.length)]
@@ -35,6 +36,7 @@ function setupCurrentTurn() {
     setWordInFirebase(word);
 
     document.getElementById("guessBox").classList.add("hidden");
+    document.getElementById("toolbar").classList.remove("hidden");
   }
 
   let childNodes = document.getElementById("userlist2").childNodes;
