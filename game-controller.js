@@ -21,6 +21,7 @@ function showLobby() {
   document.getElementById("homepage").classList.add("hidden");
   document.getElementById("lobby").classList.remove("hidden");
   document.getElementById("game").classList.add("hidden");
+  document.getElementById("copyLink").onclick = onClickCopy;
 }
 
 function showGame() {
@@ -36,6 +37,7 @@ function onClickJoin() {
   history.pushState({game: gameName}, "title 1", `?game=${gameName}`);
   console.log(history.state);
   showLobby();
+  document.getElementById("gameLink").value = `${window.location.host}?game=${gameName}`;
   signInToFirebase();
   var userListFromFb = {};
   function onUserListChange(data) {
@@ -101,6 +103,10 @@ function startGame() {
     userListElement.appendChild(newListItem);
   }
   listenToFirebaseChanges();
+}
+
+function onClickCopy() {
+  navigator.clipboard.writeText(document.getElementById("gameLink").value);
 }
 
 function onClickStop() {

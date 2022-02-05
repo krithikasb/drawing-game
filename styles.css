@@ -15,7 +15,16 @@ body {
 .lobby {
   padding-top: 4rem;
   display: grid;
-  justify-content: center;
+  justify-items: center;
+}
+
+.gameLink {
+  font-size: 1.5rem;
+  background-color: cornsilk;
+  border: 3px solid rosybrown;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  margin-top: 4rem;
 }
 
 .lobby.hidden {
