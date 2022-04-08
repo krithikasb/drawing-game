@@ -159,3 +159,13 @@ function listenToFirebaseChanges() {
   listenToFirebaseChildAdded(GUESSED_USERS, onAddGuessedUser);
   listenToFirebaseValueChange(GAME_STATE, onGameStateChange);
 }
+
+function onKeyDown(e) {
+  if(e.key === "Enter") {
+    // e.preventDefault();
+    onClickGuess();
+  }
+}
+
+document.getElementById("guess").onkeydown = onKeyDown;
+
